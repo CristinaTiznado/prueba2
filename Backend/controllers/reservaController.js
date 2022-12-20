@@ -27,13 +27,20 @@ const createReserva = (req, res) => {
                 num_reserva : num
             })
 
-                newReserva.save((error, reserva) => {
+            newReserva.save((error, reserva) => {
                 if(error){
                     console.log(error)
                     return res.status(400).send({ message: "No se ha podido crear la reserva"})
                 }
+                Vecino.updateOne({ codigo: codigo }, { $push: { reservas: reserva._id } }, (error) => {
+                    if (error) {
+                        console.log(error)
+                        return res.status(400).send({ message: "Error al actualizar el vecino" })
+                    }
+                })
                 return res.status(201).send(reserva)
-            })
+        })
+            
             })
         }
     })
