@@ -1,124 +1,90 @@
 import { useState, useEffect } from "react";
-import {
-  Flex,
-  Heading,
-  Input,
-  Button,
-  InputGroup,
-  Stack,
-  InputLeftElement,
-  Box,
-  Avatar,
-  FormControl,
-  Radio,
-  RadioGroup,
-  FormHelperText,
-  InputRightElement,
-
-} from "@chakra-ui/react";
+import { Flex, Heading, Input, Button, InputGroup, Stack, InputLeftElement, Box, Avatar, FormControl, Radio, RadioGroup, FormHelperText, InputRightElement, } from "@chakra-ui/react";
 import axios from 'axios'
 import Swal from 'sweetalert2'
 import { useRouter } from 'next/router'
 
-
-
 export default function Home() {
 
+  const router = useRouter()
 
-const router = useRouter()
+  const [values, setValues]= useState({
+    codigo:''
+  })
 
-const [values, setValues]= useState({
-  codigo:''
-})
+  const onSubmit= async(e) => {
+    e.preventDefault()
+    console.log(values)
 
-const onSubmit= async(e) => {
-  e.preventDefault()
-  console.log(values)
+    if(document.getElementById('admin').checked){
+      try{
 
-  if(document.getElementById('admin').checked){
-    try{
-
-      const response = await axios.post(`${process.env.API_URL}/administrador/login`,values)
-      console.log(response)
-
-    console.log(response)
-    if(response.status===200){
-      Swal.fire({
-        title:"Bienvenido",
-        icon:'success',
-        confirmButtonText:'OK'
-      }).then((result)=>{
-        console.log(values.codigo)
-
-        router.push({pathname:'/Admin/inicio_admin',
-        query:{codigo: values.codigo},
-      });
-
-      })
+        const response = await axios.post(`${process.env.API_URL}/administrador/login`,values)
+        console.log(response)
+        console.log(response)
+        if(response.status===200){
+          Swal.fire({
+            title:"Bienvenido",
+            icon:'success',
+            confirmButtonText:'OK'
+          }).then((result)=>{
+            console.log(values.codigo)
+            router.push({pathname:'/Admin/inicio_admin', query:{codigo: values.codigo}, });
+          })
+        }
+      }catch(error){
+        Swal.fire({
+          title:"Codigo no valido",
+          text:'Ingrese un codigo valido',
+          icon:'error',
+          confirmButtonText:'OK'
+        })
+      }
     }
 
-  }
-  catch(error){
-    Swal.fire({
-      title:"Codigo no valido",
-      text:'Ingrese un codigo valido',
-      icon:'error',
-      confirmButtonText:'OK'
-    })
-  }
-}
-if(document.getElementById('vecino').checked){
-  try{
-    const response = await axios.post(`${process.env.API_URL}/vecino/login`,values)
-    console.log(response)
-
-
-  console.log(response)
-  if(response.status===200){
-    Swal.fire({
-      title:"Bienvenido",
-      icon:'success',
-      confirmButtonText:'OK'
-    }).then((result)=>{
-
-      router.push({pathname:'/Vecino/inicio_vecino',
-        query:{codigo: values.codigo},
-      });
-    })
-}else{
-    Swal.fire({
-      title:"Codigo no valido",
-      text:'Ingrese un codigo valido',
-      icon:'error',
-      confirmButtonText:'OK'
-    })
-  }
-
-}
-catch(error){
-  console.log(error)
-  if(error.response.status===401){
-    Swal.fire({
-      title:"Vecino Inhabilitado",
-      text:"Por favor comunicarse con su Administrador",
-      icon:'warning',
-      confirmButtonText:"OK"
-    })
-  }else{
-    Swal.fire({
-      title:"Codigo no valido",
-      text:'Este codigo no existe',
-      icon:'error',
-      confirmButtonText:'OK'
-    })
+    if(document.getElementById('vecino').checked){
+      try{
+        const response = await axios.post(`${process.env.API_URL}/vecino/login`,values)
+        console.log(response)
+        console.log(response)
+        if(response.status===200){
+          Swal.fire({
+            title:"Bienvenido",
+            icon:'success',
+            confirmButtonText:'OK'
+          }).then((result)=>{
+            router.push({pathname:'/Vecino/inicio_vecino', query:{codigo: values.codigo}, });
+          })
+        }else{
+          Swal.fire({
+            title:"Codigo no valido",
+            text:'Ingrese un codigo valido',
+            icon:'error',
+            confirmButtonText:'OK'
+          })
+        }
+      }catch(error){
+        console.log(error)
+        if(error.response.status===401){
+          Swal.fire({
+            title:"Vecino Inhabilitado",
+            text:"Por favor comunicarse con su Administrador",
+            icon:'warning',
+            confirmButtonText:"OK"
+          })
+        }else{
+          Swal.fire({
+            title:"Codigo no valido",
+            text:'Este codigo no existe',
+            icon:'error',
+            confirmButtonText:'OK'
+          })
+        }
+      }
+    }
   }
 
-}
-}
-}
-
-const onChange = (e) => {
-
+  const onChange = (e) => {
     if(e.target.value.length>4){
       e.target.value=e.target.value.substring(0,4);
     }
@@ -127,14 +93,11 @@ const onChange = (e) => {
       [e.target.name]:e.target.value
     })
     console.log(e.target.name,e.target.value);
+  }
 
-}
-
-useEffect(() => {
-  document.title="Lavanderia 60 minutos";
-}, []);
-
-
+  useEffect(() => {
+    document.title="Lavanderia 60 minutos";
+  }, []);
 
   return (
     <Flex

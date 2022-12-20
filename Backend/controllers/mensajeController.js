@@ -1,21 +1,29 @@
 const Mensaje = require('../models/mensaje');
+const Vecino = require('../models/vecino');
 
 const createMensaje = (req, res) => {
-    const { vecino, administrador, dia, mes, year,asunto, contenido } = req.body
+    const { vecino, administrador, dia, mes, year, contenido, asunto } = req.body
+    const { codigo } = req.params
     const newMensaje = new Mensaje({
         vecino,
         administrador,
         dia,
         mes,
         year,
-        asunto,
-        contenido
+        contenido,
+        asunto
     })
     newMensaje.save((error, mensaje) => {
         if(error){
-            console.log(error);
+            console.log(error)
             return res.status(400).send({ message: "No se ha podido crear el mensaje"})
         }
+        Vecino.updateOne({ codigo: codigo }, { $push: { mensajes: mensaje._id } }, (error) => {
+            if (error) {
+                console.log(error)
+                return res.status(400).send({ message: "Error al actualizar el vecino" })
+            }
+        })
         return res.status(201).send(mensaje)
     })
 }
@@ -34,7 +42,7 @@ const getMensajes = (req, res) => {
 
 const getMensajeF = (req, res) => {
     const {mes, year} = req.params
-    Mensaje.find({mes, year}).populate({ path: 'vecino'}).exec((error, mensaje) => {
+    Mensaje.find({mes, year}).populate({ path: 'vecino administrador'}).exec((error, mensaje) => {
         if(error){
             return res.status(400).send({ message: "No se ha podido realizar la busqueda"})
         }
@@ -47,7 +55,7 @@ const getMensajeF = (req, res) => {
 
 const getMensajeD = (req, res) => {
     const {dia, mes, year} = req.params
-    Mensaje.find({dia, mes, year}).populate({ path: 'vecino'}).exec((error, mensaje) => {
+    Mensaje.find({dia, mes, year}).populate({ path: 'vecino administrador'}).exec((error, mensaje) => {
         if(error){
             return res.status(400).send({ message: "No se ha podido realizar la busqueda"})
         }

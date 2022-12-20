@@ -1,14 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
-import { Flex, Text, Box, Stack,Button,VStack,HStack, Input, Select } from "@chakra-ui/react";
+import { Flex, Text, Box, Stack,Button,VStack,HStack, Input, Select,Label } from "@chakra-ui/react";
 import { Calendar } from 'react-date-range';
 import format from 'date-fns/format'
 import Swal from 'sweetalert2'
 import axios from 'axios'
 
+
+
 import 'react-date-range/dist/styles.css'
 import 'react-date-range/dist/theme/default.css'
 
 const AgregarReserva=()=> {
+
+
+    const [selectedOption, setSelectedOption] = useState('')
+    const [valor, setValor] = useState('0')
+    const [open, setOpen] = useState(false)
+    const [calendar, setCalendar] = useState('')
+    const refOne = useRef(null)
+
+    //const [date, setDate] = useState('')
 
     const [values, setValues]= useState({
         dia:'',
@@ -18,13 +29,13 @@ const AgregarReserva=()=> {
         servicio:'',
         vecino:'',
         costo_base:'',
-        costo_extra:''
+        costo_extra: 0
     })
-    const [open, setOpen] = useState(false)
-    const [calendar, setCalendar] = useState('')
-    const refOne = useRef(null)
 
     useEffect(() => {
+
+        getVecinos()
+        getServicios()
         setCalendar(format(new Date(), 'dd/MM/yyyy'))
         document.addEventListener("keydown", hideOnEscape, true)
         document.addEventListener("click", hideOnClickOutside, true)
@@ -41,36 +52,140 @@ const AgregarReserva=()=> {
             setOpen(false)
         }
     }
+
+    //posiblemente hay que eliminar
     const handleSelect = (date) => {
+        console.log("FECHA AAA")
+        console.log(date)
         setCalendar(format(date, 'dd/MM/yyyy'))
-        //console.log(date)
         const a=date.getDate();
         const b=date.getMonth()+1;
         const c=date.getFullYear();
         const dia=  a.toString();
         const mes=  b.toString();
         const year= c.toString();
-        setFecha({a ,b , c});
         setValues({...values,dia,mes,year});
     }
-    const onChange = (e) => {
-        setValues({
-        ...values,
-        [e.target.name]:e.target.value
-        })
-        console.log(e.target.name,e.target.value);
+
+
+    const onChange = async (e) => {
+        
+        if(e.target.name=="servicio"){
+
+            const response1 = await axios.get(`${process.env.API_URL}/servicio/search/${e.target.value}`)
+            setValor(response1.data.costo)
+            setValues({
+                ...values,
+                servicio:response1.data._id,
+                costo_base:response1.data.costo
+                })
+                console.log(e.target.name, response1.data.costo);
+        }else
+        if(e.target.name == "vecino"){
+            const response = await axios.get(`${process.env.API_URL}/vecino/search/${e.target.value}`)
+
+            setValues({
+                ...values,
+                [e.target.name]:response.data._id
+                })
+                console.log(e.target.name,response.data._id);
+        }else
+        if(e.target.name != "vecino" || e.target.name != "servicio"){
+            setValues({
+                ...values,
+                [e.target.name]:e.target.value
+                })
+                console.log(e.target.name,e.target.value);
+        }
     }
 
-    const onSubmit= async(e) =>{
+    /**Funcion que permite agregar los valores de: Día, Mes y Año
+     */
+    const DateSetter = (e) =>
+    {
+        const string = e.target.value
+        const timestamp = Date.parse(string)
+        const date2 = new Date(timestamp)
+
+        const a=date2.getDate()+1;
+        const b=date2.getMonth()+1;
+        const c=date2.getFullYear();
+        const dia=  a.toString();
+        const mes=  b.toString();
+        const year= c.toString();
+
+        setValues({...values,dia,mes,year});
+    }
+
+
+    /**
+     *Funciones que permiten establecer las fechas limites para un input Date
+     *
+     */
+    function castMin()
+    {
+        const currentDate = new Date();
+        const dateString1 = currentDate.toLocaleDateString('es-ES', { day: '2-digit' });
+        const dateString2 = currentDate.toLocaleDateString('es-ES', { month: '2-digit' });
+        const dateString3 = currentDate.toLocaleDateString('es-ES', { year: 'numeric' });
+
+        const fechaMinima = (dateString3 + '-' + dateString2 + '-' + dateString1)
+        return fechaMinima;
+    }
+
+
+    function castMax()
+    {
+        const currentDate = new Date();
+        const dateString1 = currentDate.toLocaleDateString('es-ES', { day: '2-digit' });
+        const dateString2 = currentDate.toLocaleDateString('es-ES', { month: '2-digit' });
+        const dateString3 = currentDate.toLocaleDateString('es-ES', { year: 'numeric' });
+        const dia2='01'
+        const mes2='01'
+        const mes= (parseInt(dateString2, 10)+1);
+        const year2 = (parseInt(dateString3, 10)+1);
+
+        if(dateString2==12)
+        {
+                const fechaMaxima = (year2 + '-' + mes2 + '-' + dia2)
+            return fechaMaxima;
+        }else
+        {
+                const fechaMaxima = (dateString3 + '-' + mes + '-' + dateString1)
+            return fechaMaxima;
+        }
+    }
+
+
+
+    const Actualizar = () =>{
+
+        if(values.servicio.nombre=='lavadora'){
+            setValues({...values,
+                costo_base: "8000"});
+        }
+        if(values.servicio.nombre=='secadora'){
+            setValues({...values,
+                costo_base: "6000"});
+        }
+    }
+
+
+    const onSubmit= async (e) =>{
+
         e.preventDefault()
+        Actualizar();
         console.log(values)
+
+
+
         try {
-        const response = await axios.post(`${process.env.API_URL}/reserva`,values)
-        console.log(response)
+        const response = await axios.post(`${process.env.API_URL}/reserva/${vecino_select.value}`,values)
+        
 
         if(response.status===201){
             Swal.fire({
-            title:"Mantención Registrada",
+            title:"Reserva Registrada",
             icon:'success',
             confirmButtonText:'OK'
             }).then(()=>{
@@ -80,12 +195,43 @@ const AgregarReserva=()=> {
         } catch (error) {
             console.log(error.status)
         Swal.fire({
-            title:"No se pudo agendar la Mantención",
+            title:"No se pudo agendar la Reserva",
             text:'Por favor revise los datos ingresado',
             icon:'warning',
             confirmButtonText:'OK'
         })
         }
+    }
+
+    const [vecinos, setVecinos] = useState([])
+    const getVecinos = async () => {
+    const response = await axios.get(`${process.env.API_URL}/vecinos`)
+    setVecinos(response.data)
+    }
+
+    const [servicios, setServicios] = useState([])
+    const getServicios = async () => {
+    const response = await axios.get(`${process.env.API_URL}/servicios`)
+    setServicios(response.data)
+    }
+
+    const showVecinos= () =>{
+        return vecinos.map(vecinos =>{
+            return (
+            <option name="vecino" key={vecinos._id} value={vecinos.codigo}>{vecinos.nombre} {vecinos.apellido}</option>
+
+        )
+    })
+    }
+
+    const showServicios= () =>{
+
+        return servicios.map(servicios =>{
+        return (
+
+            <option name="servicio" key={servicios.nombre} value={servicios._id}>{servicios.nombre}</option>
+        )
+        })
     }
 
 return (
@@ -96,7 +242,7 @@ return (
             backgroundColor="blue.400"
             alignItems="center"
             >
-              <Text fontSize={50} color="white" mt={30} mb={30}>Crear Mantencion</Text>
+              <Text fontSize={50} color="white" mt={30} mb={30}>Crear Reserva</Text>
               <Box  minW={{ base: "10%", md: "468px"}} >
             <form>
                 <Stack spacing={4}
@@ -111,50 +257,46 @@ return (
                 <HStack>
                     <VStack spacing={6}>
                             <HStack>
-                                    <Text color={"blue.400"} as="b" >Fecha</Text>
-                                    <Input
-                                        value={ calendar }
-                                        readOnly
-                                        onClick={ () => setOpen(open => !open) }
-                                    />
-                                    <Box ref={refOne} flexDirection="column">
-                                    {open &&
-                                    <Calendar
-                                    date={ new Date()}
-                                    onChange = {handleSelect}
-                                    className="calendarElement"
-                                />
-                                }
-                                </Box>
+
                             </HStack>
                             <HStack>
-                                    <Text color={"blue.400"} as="b" >Nombre de empresa</Text>
-                                    <Input width={60} type={"text"} name={"nombre_empresa"}onChange={onChange} ></Input>
+                                    <Text color={"blue.400"} as="b" >Hora:</Text>
+                                    <Input type="date" id="start"
+                                        date={new Date()}
+                                        onChange={DateSetter}
+                                        min={castMin()} max={castMax()}></Input>
+                            </HStack>
+
+                            <HStack>
+                                    <Text color={"blue.400"} as="b" >Hora:</Text>
+                                    <Input width={60} 
+                                    type="time"
+                                    pattern="[0-9]{2}:[0-9]{2}" name={"hora"} onChange={onChange} step={3600}></Input>
                             </HStack>
                             <HStack>
-                                    <Text color={"blue.400"} as="b" >rut de empresa</Text>
-                                    <Input width={60} type={"text"} name={"rut_empresa"}onChange={onChange} ></Input>
+                                    <Text  value={selectedOption} color={"blue.400"} name="servicio" as="b" >Servicio:</Text>
+                                    <Select placeholder='seleccione servicio' name="servicio" onChange={onChange}>
+                                        {showServicios()}
+                                    </Select>
                             </HStack>
                             <HStack>
-                                    <Text color={"blue.400"} as="b" >giro de empresa</Text>
-                                    <Input width={60} type={"text"} name={"giro"}onChange={onChange} ></Input>
+                                    <Text color={"blue.400"} as="b" >Vecino</Text>
+                                    <Select id="vecino_select" placeholder='Vecinos' name="vecino" onChange={onChange}>
+                                    {showVecinos()}
+                                    </Select>
                             </HStack>
                             <HStack>
-                                    <Text color={"blue.400"} as="b" >descripcion de mantencion</Text>
-                                    <Input width={60} type={"text"} name={"descripcion"}onChange={onChange} ></Input>
+                                    <Text color={"blue.400"} as="b" >Costo del Servicio</Text>(
+                                    <Text name='costo_base'>{"$"+valor}</Text>)
+
                             </HStack>
                             <HStack>
-                                    <Text color={"blue.400"} as="b" >valor </Text>
-                                    <Input width={60} type={"number"} name={"valor"}onChange={onChange} ></Input>
-                            </HStack>
-                            
-                            <HStack>
-                                    <Text color={"blue.400"} as="b" >Observaciones </Text>
-                                    <Input width={60} type={"text"} minLength={10} maxLength={200} name={"observaciones"}onChange={onChange} ></Input>
+                                    <Text color={"blue.400"} as="b" >Costo Extra </Text>
+                                    <Input width={60} type={"number"} name={"costo_extra"}onChange={onChange} ></Input>
                             </HStack>
                             <HStack>
-                                    <Text color={"blue.400"} as="b" >NÂ° mantencion</Text>
-                                    <Input width={60} type={"number"} name={"num_mantencion"} onChange={onChange} ></Input>
+                                    <Text color={"blue.400"} as="b" >Costo total </Text>
+                                    <Text></Text>
                             </HStack>
                     </VStack>
 

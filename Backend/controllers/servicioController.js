@@ -11,6 +11,19 @@ const createServicio = (req, res) => {
 })
 }
 
+const getServicio = (req, res) => {
+    const {id} = req.params
+    Servicio.findById(id, (error, servicio) => {
+        if(error){
+            return res.status(400).send({ message: "No se ha podido realizar la busqueda"})
+        }
+        if(!servicio){
+            return res.status(404).send({ message: "No se ha encontrado el servicio"})
+        }
+        return res.status(200).send(servicio)
+    })
+}
+
 const getServicios = (req , res) => {
     Servicio.find({},(error, servicios) =>{
         if(error){
@@ -54,5 +67,6 @@ module.exports={
     createServicio,
     getServicios,
     updateServicio,
-    deleteServicio
+    deleteServicio,
+    getServicio
 }

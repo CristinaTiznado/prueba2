@@ -1,9 +1,9 @@
 const Reserva = require('../models/reserva');
+const Vecino = require('../models/vecino');
 
 const createReserva = (req, res) => {
     const { dia, mes, year, hora, servicio, vecino, costo_base, costo_extra} = req.body
     Reserva.countDocuments({dia,mes,year,hora},(error,count)=>{
-        //console.log(count);
         if(error){
             return res.status(400).send({message:"no se pudo calcular la cantidad de reservas"})
         }
@@ -14,9 +14,7 @@ const createReserva = (req, res) => {
         if(count<3){
 
             Reserva.countDocuments({},(error,cantidad) =>{
-            console.log(cantidad);
             const num = String(cantidad+1).padStart(5,'0');
-            console.log(num)
             const newReserva = new Reserva({
                 dia,
                 mes,
@@ -41,7 +39,6 @@ const createReserva = (req, res) => {
     })
 }
 
-
 const getReserva = (req, res) => {
     const { num_reserva} = req.params
     Reserva.find({num_reserva}).populate({ path: 'vecino servicio'}).exec((error, reserva) => {
@@ -57,7 +54,7 @@ const getReserva = (req, res) => {
 
 const getReservaF = (req, res) => {
     const {mes, year} = req.params
-    Reserva.find({mes, year}).populate({ path: 'vecino'}).exec((error, reserva) => {
+    Reserva.find({mes, year}).populate({ path: 'vecino servicio'}).exec((error, reserva) => {
         if(error){
             return res.status(400).send({ message: "No se ha podido realizar la busqueda"})
         }
@@ -70,7 +67,7 @@ const getReservaF = (req, res) => {
 
 const getReservaH = (req, res) => {
     const {hora, dia, mes, year} = req.params
-    Reserva.find({hora, dia, mes, year}).populate({ path: 'vecino'}).exec((error, reserva) => {
+    Reserva.find({hora, dia, mes, year}).populate({ path: 'vecino servicio'}).exec((error, reserva) => {
         if(error){
             return res.status(400).send({ message: "No se ha podido realizar la busqueda"})
         }
@@ -83,7 +80,7 @@ const getReservaH = (req, res) => {
 
 const getReservaD = (req, res) => {
     const {dia, mes, year} = req.params
-    Reserva.find({dia, mes, year}).populate({ path: 'vecino'}).exec((error, reserva) => {
+    Reserva.find({dia, mes, year}).populate({ path: 'vecino servicio'}).exec((error, reserva) => {
         if(error){
             return res.status(400).send({ message: "No se ha podido realizar la busqueda"})
         }
@@ -95,16 +92,14 @@ const getReservaD = (req, res) => {
 }
 
 const getReservas = (req, res) => {
-    Reserva.find({}).populate({ path: 'vecino servicio' }).exec((error, reservas) => {
+    Reserva.find({}).sort({num_reserva : 1}).populate({ path: 'vecino servicio' }).exec((error, reservas) => {
         if(error){
             return res.status(400).send({ message: "No se ha podido realizar la busqueda"})
         }
         if(reservas.length === 0){
             return res.status(404).send({ message: "No se encontraron reservas"})
         }
-        let reservasordenadas= reservas.sort((a, b) => (a.dia && a.mes && a.year - b.dia && b.mes && b.year));
-
-        return res.status(200).send(reservasordenadas)
+        return res.status(200).send(reservas)
     })
 }
 
@@ -120,22 +115,6 @@ const deleteReserva = (req, res) => {
         return res.status(200).send({ message: "Se ha elimnado la reserva correctamente"})
     })
 }
-const deleteReservas = (req, res) =>
-{
-    const { vecino } = req.params
-    Reserva.findOneAndDelete({ vecino }, (error, reserva) =>
-    {
-        if(error){
-            return res.status(400).send({ message: "No se han podido eliminar las reservas"})
-        }
-        if(!reserva){
-            return res.status(404).send({ message: "No se ha podido encontrar la reserva"})
-        }
-        return res.status(200).send({ message: "Se ha elimnado la reserva correctamente"})
-    })
-}
-
-
 
 module.exports = {
     createReserva,
@@ -144,8 +123,7 @@ module.exports = {
     getReservaH,
     getReservaD,
     getReservas,
-    deleteReserva,
-    deleteReservas
+    deleteReserva
 }
 
 
