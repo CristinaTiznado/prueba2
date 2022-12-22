@@ -65,6 +65,19 @@ const getVecino = (req, res) =>{
     })
 }
 
+const getVecinoById = (req, res) =>{
+    const{ id } = req.params;
+    Vecino.findById(id, (error, vecino) =>{
+        if(error) {
+            return res.status(400).send({message:'Error al obtener vecino'});
+        }
+        if(!vecino){
+            return res.status(404).send({message:'No se encontro al vecino'});
+        }
+        return res.status(200).send(vecino);
+    })
+}
+
 const updateVecino = (req, res) =>{
     const {nombre, apellido, rut, vivienda, permiso, horas} = req.body;
     const {codigo} = req.params;
@@ -154,5 +167,6 @@ module.exports={
     getReservasVecino,
     getMultasVecino,
     getMensajesVecino,
-    getCobrosVecino
+    getCobrosVecino,
+    getVecinoById
 }

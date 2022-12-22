@@ -7,6 +7,7 @@ api.post('/vecino',validateVecino, vecinoController.createVecino);
 api.post('/vecino/login', vecinoController.loginVecino);
 api.get('/vecinos', vecinoController.getVecinos);
 api.get('/vecino/search/:codigo', vecinoController.getVecino);
+api.get('/vecino/search2/:id', vecinoController.getVecinoById);
 api.put('/vecino/update/:codigo',validateVecinoUpdate, vecinoController.updateVecino);
 api.delete('/vecino/delete/:codigo', vecinoController.deleteVecino);
 

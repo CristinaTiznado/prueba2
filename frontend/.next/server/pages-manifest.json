@@ -2,5 +2,5 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/Vecino/agregar_reserva": "pages/Vecino/agregar_reserva.js"
+  "/Admin/Mensajes/agregar_mensaje": "pages/Admin/Mensajes/agregar_mensaje.js"
 }
